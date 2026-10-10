@@ -167,7 +167,7 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit("--data requires --tokenizer")
         tok = MegaTokenizer(args.tokenizer)
         model_cfg.vocab_size = tok.vocab_size
-        corpus = TextCorpus(args.data, tok, seq_len=train_cfg.seq_len)
+        corpus = TextCorpus(args.data, tok, seq_len=train_cfg.seq_len, bos_id=tok.bos_token_id)
         print(f"real-data training: {len(corpus):,} windows of {train_cfg.seq_len} tokens")
     else:
         corpus = SyntheticCorpus(

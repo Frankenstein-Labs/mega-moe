@@ -19,18 +19,42 @@ the arithmetic you need to decide whether a config can be trained at all.
 ## Quick start
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,tokenizer,hub]"
 
 # 1. does my config fit?  (parameters, memory, FLOPs, parallel plan)
-mega-info --preset small
-mega-info --config configs/moe-1t.yaml --gpus 2048 --gpu-mem 141 --tokens 20e12
+mega info --preset small
+mega info --config configs/moe-1t.yaml --gpus 2048 --gpu-mem 141 --tokens 20e12
 
 # 2. is the model correct?
 python -m pytest tests/ -q
 
-# 3. does it train?  (CPU, ~2 minutes)
-python -m mega.train.loop --config configs/small.yaml
+# 3. does the whole pipeline work, end to end?
+bash scripts/smoke.sh          # corpus -> tokenizer -> train -> export -> eval -> generate
 ```
+
+## Train a real model
+
+A complete, reproducible run on the structured corpus (`docs/PIPELINE.md` has the
+detail):
+
+```bash
+mega corpus   --out data/corpus --lines 60000
+mega tokenize --input data/corpus/train.txt --model-prefix data/tokenizer/mega \
+              --vocab-size 800 --model-type unigram
+mega train    --config configs/mega-small.yaml --data data/corpus/train.txt \
+              --tokenizer data/tokenizer/mega.model --export
+mega eval     --model runs/mega-small/hf
+mega generate --model runs/mega-small/hf --prompt "73 - 42 =" --max-new-tokens 8
+mega push     --repo <user>/mega-small --model runs/mega-small/hf --dataset data/corpus
+```
+
+`configs/mega-small.yaml` is a real MoE (16 routed + 2 shared experts, top-2,
+auxiliary-loss-free routing) trained on CPU. `mega eval` reports perplexity,
+next-token accuracy and **arithmetic accuracy** — the fraction of `a op b =`
+prompts the model actually gets right.
+
+There is also SFT (`mega sft`), which reuses the same trainer with a
+response-only loss mask, and a Gradio demo under `spaces/`.
 
 ## What is implemented
 
@@ -43,10 +67,15 @@ python -m mega.train.loop --config configs/small.yaml
 | Transformer + KV-cache generation | `model/transformer.py` | cached decode verified to match full forward |
 | Muon + AdamW | `model/optimizer.py` | Newton-Schulz orthogonalisation, warmup/WSD schedule |
 | Vision / audio / fusion | `multimodal/models.py` | ViT + temporal pooling, Whisper-style encoder, Perceiver resampler |
-| Data | `data/pack.py` | sequence packing + learnable synthetic corpus |
+| Data | `data/pack.py`, `data/text.py`, `data/sft.py` | sequence packing, structured corpus, instruction pairs with response-only mask |
 | Parallelism planner | `parallel/plan.py` | 3D/4D/5D search, memory + FLOPs + KV-cache math |
 | Training loop | `train/loop.py` | grad accum, clipping, checkpoint + exact resume |
+| SFT | `train/sft.py` | instruction tuning over the same trainer |
+| Evaluation | `eval/harness.py` | perplexity, next-token and arithmetic accuracy |
+| Hub export | `hub/serialization.py`, `hub/__init__.py` | safetensors + config.json, model card, upload |
+| CLI | `cli.py` | `mega {info,corpus,tokenize,train,sft,eval,generate,push}` |
 | Distributed entry | `train/distributed.py` | validates topology, reports memory, no fake TP/PP |
+| CI / demo | `.github/workflows/ci.yml`, `spaces/` | lint + tests + smoke; Gradio Space |
 
 ## Verified results
 
@@ -83,17 +112,22 @@ KV cache  10M tokens: 1,072.9 GiB per sequence
 ```
 src/mega/
   config.py           ModelConfig / TrainConfig (JSON round-trip, validated)
+  cli.py              unified `mega` command line
   model/              attention, MoE, transformer, optimizer, norms, rope, ffn
   multimodal/         vision + audio encoders, perceiver resampler, fusion
-  data/               packing, synthetic corpus
+  data/               packing, structured corpus, SFT pairs
   parallel/           parameter/FLOPs/memory math, parallel-plan search
-  tokenizer/          SentencePiece training
-  train/              training loop + distributed entry point
+  tokenizer/          SentencePiece training + Hub-friendly wrapper
+  train/              training loop, SFT, distributed entry point
+  eval/               perplexity, next-token and arithmetic accuracy
+  hub/                safetensors export, model card, Hub upload
   utils/              checkpointing, mega-info calculator, feasibility report
-configs/              small.yaml (CPU), moe-1t.yaml (1T target)
-scripts/              install_cluster.sh, slurm/train_moe_1t.sbatch
-tests/                42 tests
-docs/                 FEASIBILITY, ARCHITECTURE, ROADMAP, INFRASTRUCTURE
+configs/              small.yaml, mega-small.yaml (trained), moe-1t.yaml
+scripts/              install_cluster.sh, smoke.sh, slurm/
+spaces/               Gradio demo Space
+.github/workflows/    CI: lint + tests + end-to-end smoke
+tests/                test suite
+docs/                 PIPELINE, FEASIBILITY, ARCHITECTURE, ROADMAP, INFRASTRUCTURE
 ```
 
 ## Honest limitations

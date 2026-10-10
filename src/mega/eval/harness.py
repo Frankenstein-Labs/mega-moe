@@ -127,7 +127,8 @@ def evaluate(
     cfg = model.config()
 
     val_lines = generate_corpus(n_lines, seed=seed)
-    doc_ids = [tok.encode(ln, add_bos=True, add_eos=True) for ln in val_lines]
+    # Match training exactly: BOS prefix per document; pack_sequences appends EOS.
+    doc_ids = [[tok.bos_token_id, *tok.encode(ln)] for ln in val_lines]
     window = min(cfg.max_seq_len, 64)
     ppl, ntp = perplexity(model, doc_ids, seq_len=window)
 

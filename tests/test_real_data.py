@@ -207,7 +207,7 @@ def test_eval_harness_runs(tmp_path, tiny_tokenizer):
         n_shared_experts=1, moe_top_k=2,
     )
     model = MegaModel(cfg)
-    docs = [tiny_tokenizer.encode(ln, add_bos=True, add_eos=True)
+    docs = [[tiny_tokenizer.bos_token_id, *tiny_tokenizer.encode(ln)]
             for ln in generate_corpus(40, seed=5)]
     ppl, ntp = perplexity(model, docs, seq_len=32)
     assert ppl > 0

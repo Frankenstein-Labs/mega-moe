@@ -12,15 +12,26 @@ decide whether a configuration can be trained. It runs on CPU.
 
 ```bash
 pip install -e ".[dev]"                 # install (CPU is fine)
-python -m pytest tests/ -q              # 42 tests, ~4 min on 4 CPU cores
-python -m mega.train.loop --steps 60    # smoke-train the small preset
-mega-info --preset small                # parameters / memory / FLOPs / plan
+pip install -e ".[tokenizer,hub]"       # tokenizer + safetensors/Hub support
+python -m pytest tests/ -q              # test suite, ~2 min on 4 CPU cores
+bash scripts/smoke.sh                   # full corpus->tokenizer->train->export->eval run
+
+# unified CLI
+mega info --preset small                # parameters / memory / FLOPs / plan
+mega corpus --out data/corpus --lines 60000
+mega tokenize --input data/corpus/train.txt --model-prefix data/tokenizer/mega --vocab-size 800
+mega train --config configs/mega-small.yaml --data data/corpus/train.txt \
+           --tokenizer data/tokenizer/mega.model --export
+mega eval --model runs/mega-small/hf
+mega generate --model runs/mega-small/hf --prompt "73 - 42 =" --max-new-tokens 8
+mega push --repo <user>/mega-small --model runs/mega-small/hf --dataset data/corpus
+
 mega-info --config configs/moe-1t.yaml --gpus 2048 --gpu-mem 141 --tokens 20e12
 python -c "from mega.utils.feasibility import report; report()"
 ```
 
-`mega-info` is installed into `~/.local/bin`; add it to `PATH` if the entry point
-is not found.
+`mega` and `mega-info` are installed into `~/.local/bin`; add it to `PATH` if the
+entry points are not found.
 
 ## Conventions
 
@@ -44,6 +55,15 @@ is not found.
    contribution, not the accumulator.
 4. **Parameter formulas must include QK-norm and the final norm once.** These
    are exact-equality tested.
+5. **`config.json` carries Hub metadata that is not `ModelConfig` state.**
+   `model_type`, `architectures`, `torch_dtype`, `stage` and `base_checkpoint`
+   are written by `hub/serialization.py` and must be filtered out on load
+   (`_model_fields`), or `from_pretrained` raises on its own output.
+6. **`rope_cos`/`rope_sin` are non-persistent.** They are rebuilt from the
+   config on load and legitimately absent from `model.safetensors`; the loader
+   tolerates exactly those keys and nothing else.
+7. **Special-token ids are fixed** (`<unk>`=0, `<s>`=1, `</s>`=2, `<pad>`=3) and
+   shared by `train_tokenizer.py` and `tokenizer/tokenizer.py`.
 
 ## When asked for something bigger (100T+ parameters, 10M context)
 
