@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MEGA — reference MoE language model</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+         background: #0e0b18; color: #e8e4f5; }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1 { font-size: 2.2rem; margin: 0 0 .25rem; letter-spacing: -.02em; }
+  .sub { color: #b0a8cf; margin: 0 0 2rem; }
+  .banner { background: #241a3a; border: 1px solid #4a3a78; border-left: 4px solid #b98cff;
+            border-radius: 10px; padding: 1rem 1.2rem; margin: 1.5rem 0; color: #d9d2f0; }
+  a { color: #b98cff; }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre { background: #17122a; border: 1px solid #2c2450; border-radius: 10px; padding: 1rem; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+  th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid #2c2450; }
+  th { color: #b0a8cf; font-weight: 600; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 1rem; margin: 1rem 0; }
+  .card { background: #17122a; border: 1px solid #2c2450; border-radius: 10px; padding: 1rem; text-decoration: none; display: block; }
+  .card b { color: #e8e4f5; } .card span { color: #b0a8cf; font-size: .9rem; }
+  footer { margin-top: 3rem; color: #6f68a0; font-size: .85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>MEGA</h1>
+  <p class="sub">A from-scratch Mixture-of-Experts language model — reference implementation</p>
+
+  <div class="banner">
+    <b>Research artifact.</b> A small MoE model (16 routed + 2 shared experts, top-2) trained
+    on CPU on a tiny structured corpus (arithmetic, templated fr/en sentences, small code
+    snippets). It is <b>not</b> a general-purpose assistant and has no safety tuning.
+  </div>
+
+  <div class="cards">
+    <a class="card" href="https://huggingface.co/Frankenstein-Labs/mega-small">
+      <b>Model →</b><br><span>Frankenstein-Labs/mega-small</span></a>
+    <a class="card" href="https://huggingface.co/datasets/Frankenstein-Labs/mega-corpus">
+      <b>Dataset →</b><br><span>Frankenstein-Labs/mega-corpus</span></a>
+    <a class="card" href="https://github.com/Frankenstein-Labs/mega-moe">
+      <b>Source code →</b><br><span>github.com/Frankenstein-Labs/mega-moe</span></a>
+  </div>
+
+  <h2>Load and run</h2>
+  <pre>pip install "git+https://github.com/Frankenstein-Labs/mega-moe.git"
+
+from mega.hub.serialization import from_pretrained
+from mega.tokenizer.tokenizer import MegaTokenizer
+import torch
+
+model = from_pretrained("Frankenstein-Labs/mega-small")
+tok = MegaTokenizer.from_pretrained("Frankenstein-Labs/mega-small")
+
+ids = [tok.bos_token_id, *tok.encode("17 + 16 =")]
+out = model(torch.tensor([ids]))
+print("17 + 16 =", tok.decode([int(out.logits[0, -1].argmax())]))</pre>
+
+  <h2>Verified results</h2>
+  <table>
+    <tr><th>metric</th><th>value</th></tr>
+    <tr><td>perplexity (structured corpus)</td><td>3.07</td></tr>
+    <tr><td>next-token accuracy</td><td>0.667</td></tr>
+    <tr><td>arithmetic accuracy (<code>a op b =</code>)</td><td>0.35</td></tr>
+    <tr><td>parameters</td><td>31.53M total / 16.7M active</td></tr>
+    <tr><td>training loss</td><td>6.72 → 1.02 over 1,500 steps</td></tr>
+  </table>
+
+  <footer>
+    Apache-2.0. Interactive Gradio demos on this Hub require a PRO plan; this static
+    page is provided instead.
+  </footer>
+</div>
+</body>
+</html>

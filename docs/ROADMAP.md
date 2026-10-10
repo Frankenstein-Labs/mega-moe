@@ -8,7 +8,7 @@ code in this repository plus a modest cluster.
 ## M0 — Reference validated (done)
 
 * Architecture, MoE, optimizer, training loop implemented and tested.
-* 42 tests pass on CPU; loss reduces; KV-cache decode matches full forward.
+* 55 tests pass on CPU; loss reduces; KV-cache decode matches full forward.
 * `mega-info` reports parameters, memory, FLOPs, KV cache and a parallel plan.
 
 **Exit criterion:** `pytest` green, `mega-info` reproduces the numbers in

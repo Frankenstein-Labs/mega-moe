@@ -6,8 +6,23 @@ multi-head latent attention, RoPE with YaRN, SwiGLU, and a large sparse
 Mixture-of-Experts with shared experts and auxiliary-loss-free balancing, plus
 vision and audio encoders feeding a shared Perceiver resampler.
 
-It runs **on CPU in minutes** (42 tests, verified to reduce loss), and it ships
+It runs **on CPU in minutes** (55 tests, verified to reduce loss), and it ships
 the arithmetic you need to decide whether a config can be trained at all.
+
+## Published artifacts
+
+* Model: [Frankenstein-Labs/mega-small](https://huggingface.co/Frankenstein-Labs/mega-small)
+  (16 routed + 2 shared experts, top-2; perplexity **3.07**, next-token accuracy **0.667**,
+  arithmetic accuracy **0.35** on the structured corpus)
+* Dataset: [Frankenstein-Labs/mega-corpus](https://huggingface.co/datasets/Frankenstein-Labs/mega-corpus)
+* Demo: [Frankenstein-Labs/mega-demo](https://huggingface.co/spaces/Frankenstein-Labs/mega-demo)
+
+```python
+from mega.hub.serialization import from_pretrained
+from mega.tokenizer.tokenizer import MegaTokenizer
+model = from_pretrained("Frankenstein-Labs/mega-small")
+tok = MegaTokenizer.from_pretrained("Frankenstein-Labs/mega-small")
+```
 
 > **Read [`docs/FEASIBILITY.md`](docs/FEASIBILITY.md) first if you came here for a
 > 200-trillion-parameter model.** The short version: the parameter counts are
@@ -79,7 +94,7 @@ response-only loss mask, and a Gradio demo under `spaces/`.
 
 ## Verified results
 
-`python -m pytest tests/ -q` → **42 passed**, including:
+`python -m pytest tests/ -q` → **55 passed**, including:
 
 * parameter-count formulas match the constructed modules **exactly**, for
   dense, MoE, tied-embedding and MLA configurations;
