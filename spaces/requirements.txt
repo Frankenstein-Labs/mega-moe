@@ -1,0 +1,6 @@
+torch>=2.2
+gradio>=4.0
+sentencepiece>=0.2.0
+safetensors>=0.4
+huggingface_hub>=0.23
+git+https://github.com/Frankenstein-Labs/mega-moe.git

@@ -1,0 +1,46 @@
+# The model that is actually trained and published: a small real MoE, CPU-trained.
+#
+#   python -m mega.data.text --out data/corpus --lines 60000
+#   python -m mega.tokenizer.train_tokenizer \
+#       --input data/corpus/train.txt --model-prefix data/tokenizer/mega \
+#       --vocab-size 800 --model-type unigram
+#   python -m mega.train.loop --config configs/mega-small.yaml \
+#       --data data/corpus/train.txt --tokenizer data/tokenizer/mega.model --export
+model:
+  vocab_size: 800
+  max_seq_len: 256
+  n_layers: 6
+  d_model: 256
+  n_heads: 8
+  n_kv_heads: 2
+  head_dim: 32
+  ffn_hidden: 688
+  qk_norm: true
+  attn_impl: gqa
+  use_moe: true
+  moe_every: 2
+  n_routed_experts: 16
+  n_shared_experts: 2
+  moe_top_k: 2
+  router_score: sigmoid
+  router_bias: true
+  aux_loss_coef: 1.0e-3
+
+train:
+  optimizer: muon_adamw
+  lr: 3.0e-3
+  muon_lr: 0.03
+  weight_decay: 0.05
+  warmup_steps: 50
+  max_steps: 1500
+  lr_schedule: wsd
+  wsd_decay_frac: 0.15
+  micro_batch_size: 16
+  grad_accum_steps: 1
+  seq_len: 128
+  dtype: fp32
+  grad_clip: 1.0
+  seed: 0
+  log_every: 100
+  save_every: 500
+  out_dir: runs/mega-small

@@ -42,7 +42,7 @@ def _autocast(cfg: TrainConfig):
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Train MEGA on synthetic data")
+    p = argparse.ArgumentParser(description="Train MEGA on synthetic or real text")
     p.add_argument("--config", help="YAML with model:/train: sections")
     p.add_argument("--steps", type=int, default=None)
     p.add_argument("--seq-len", type=int, default=None)
@@ -50,6 +50,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--out", default=None)
     p.add_argument("--resume", default=None, help="checkpoint to resume from")
     p.add_argument("--seed", type=int, default=None)
+    p.add_argument("--data", default=None, help="text file; enables real-data training")
+    p.add_argument("--tokenizer", default=None, help="SentencePiece .model path")
+    p.add_argument("--export", action="store_true", help="also write a safetensors export")
     return p
 
 
@@ -156,7 +159,21 @@ def main(argv: list[str] | None = None) -> int:
     if args.seed is not None:
         train_cfg.seed = args.seed
 
-    corpus = SyntheticCorpus(model_cfg.vocab_size, train_cfg.seq_len, n_samples=512, seed=train_cfg.seed)
+    if args.data:
+        from ..data.text import TextCorpus
+        from ..tokenizer.tokenizer import MegaTokenizer
+
+        if not args.tokenizer:
+            raise SystemExit("--data requires --tokenizer")
+        tok = MegaTokenizer(args.tokenizer)
+        model_cfg.vocab_size = tok.vocab_size
+        corpus = TextCorpus(args.data, tok, seq_len=train_cfg.seq_len)
+        print(f"real-data training: {len(corpus):,} windows of {train_cfg.seq_len} tokens")
+    else:
+        corpus = SyntheticCorpus(
+            model_cfg.vocab_size, train_cfg.seq_len, n_samples=512, seed=train_cfg.seed
+        )
+
     trainer = Trainer(model_cfg, train_cfg)
     if args.resume:
         step = trainer.resume(args.resume)
@@ -166,6 +183,12 @@ def main(argv: list[str] | None = None) -> int:
     out = Path(train_cfg.out_dir) / "final.pt"
     trainer.save(str(out))
     print(f"saved final checkpoint to {out}")
+    if args.export:
+        from ..hub.serialization import save_pretrained
+
+        export_dir = Path(train_cfg.out_dir) / "hf"
+        save_pretrained(trainer.model, export_dir, tokenizer=tok if args.data else None)
+        print(f"saved safetensors export to {export_dir}")
     return 0
 
 

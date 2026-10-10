@@ -38,28 +38,37 @@ def main(argv: list[str] | None = None) -> int:
         ) from exc
 
     Path(args.model_prefix).parent.mkdir(parents=True, exist_ok=True)
-    spm.SentencePieceTrainer.train(
-        input=",".join(args.input),
-        model_prefix=args.model_prefix,
-        vocab_size=args.vocab_size,
-        model_type=args.model_type,
-        character_coverage=args.character_coverage,
-        num_threads=args.num_threads,
-        max_sentence_length=args.max_sentence_length,
-        # special tokens every chat model needs
-        unk_id=0,
-        bos_id=1,
-        eos_id=2,
-        pad_id=3,
-        unk_piece="<unk>",
-        bos_piece="<s>",
-        eos_piece="</s>",
-        pad_piece="<pad>",
-        user_defined_symbols=["<image>", "<audio>", "<video>", "<|endoftext|>"],
-        byte_fallback=True,
-        add_dummy_prefix=True,
-        remove_extra_whitespaces=True,
-    )
+    try:
+        spm.SentencePieceTrainer.train(
+            input=",".join(args.input),
+            model_prefix=args.model_prefix,
+            vocab_size=args.vocab_size,
+            model_type=args.model_type,
+            character_coverage=args.character_coverage,
+            num_threads=args.num_threads,
+            max_sentence_length=args.max_sentence_length,
+            # fixed special-token ids shared with mega.tokenizer.tokenizer
+            unk_id=0,
+            bos_id=1,
+            eos_id=2,
+            pad_id=3,
+            unk_piece="<unk>",
+            bos_piece="<s>",
+            eos_piece="</s>",
+            pad_piece="<pad>",
+            user_defined_symbols=["<image>", "<audio>", "<video>"],
+            byte_fallback=True,
+            add_dummy_prefix=True,
+            remove_extra_whitespaces=True,
+        )
+    except RuntimeError as exc:
+        # SentencePiece refuses a vocab larger than the data can fill. Surface
+        # that so the caller can pick a valid size instead of guessing.
+        raise SystemExit(
+            f"tokenizer training failed: {exc}\n"
+            "The corpus cannot fill the requested vocabulary. Lower --vocab-size "
+            "or supply more varied text."
+        ) from exc
     print(f"wrote {args.model_prefix}.model / .vocab  (vocab_size={args.vocab_size})")
     return 0
 

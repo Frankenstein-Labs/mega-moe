@@ -22,9 +22,11 @@ Repository = "https://github.com/Frankenstein-Labs/mega-moe"
 tokenizer = ["sentencepiece>=0.2.0", "protobuf>=4.25"]
 data = ["datasets>=2.18", "webdataset>=0.2.86", "pyarrow>=15.0"]
 eval = ["lm-eval>=0.4"]
+hub = ["huggingface_hub>=0.23", "safetensors>=0.4"]
 dev = ["pytest>=8.0", "ruff>=0.5"]
 
 [project.scripts]
+mega = "mega.cli:main"
 mega-info = "mega.utils.calc:main"
 
 [tool.setuptools.packages.find]
