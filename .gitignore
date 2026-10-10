@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.log
+
+# artefacts
+data/
+checkpoints/
+runs/
+wandb/
+*.safetensors
+*.bin
+*.pt
+*.ckpt
+tokenizer/*.model
+tokenizer/*.vocab
+!tokenizer/*.py

@@ -1,0 +1,36 @@
+# Small config that trains on CPU in a couple of minutes.
+# Verify the loop with:  python -m mega.train.loop --config configs/small.yaml
+model:
+  vocab_size: 4096
+  max_seq_len: 512
+  n_layers: 6
+  d_model: 256
+  n_heads: 8
+  n_kv_heads: 2
+  head_dim: 32
+  ffn_hidden: 688
+  attn_impl: gqa
+  rope_base: 10000.0
+  use_moe: true
+  moe_every: 3
+  n_routed_experts: 16
+  n_shared_experts: 1
+  moe_top_k: 2
+  qk_norm: true
+
+train:
+  optimizer: muon_adamw
+  lr: 3.0e-3
+  muon_lr: 0.05
+  warmup_steps: 20
+  max_steps: 500
+  lr_schedule: wsd
+  micro_batch_size: 8
+  grad_accum_steps: 1
+  seq_len: 512
+  dtype: bf16
+  grad_clip: 1.0
+  seed: 0
+  log_every: 25
+  save_every: 250
+  out_dir: runs/small

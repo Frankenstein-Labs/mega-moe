@@ -1,0 +1,71 @@
+# Reference MoE configuration: ~1T total parameters, ~150B active.
+#
+# This shape does NOT fit on the machine this repo ships from.  It is the
+# target the distributed launcher in scripts/slurm/ points at, and the config
+# `mega-info --config configs/moe-1t.yaml --gpus 2048 --tokens 20e12` will
+# tell you the memory, FLOPs and a proposed parallel plan for it.
+#
+# Pre-flight check (do this before submitting any job):
+#   mega-info --config configs/moe-1t.yaml --gpus 2048 --gpu-mem 141
+model:
+  vocab_size: 128000
+  max_seq_len: 8192
+  n_layers: 61
+  d_model: 7168
+  n_heads: 56
+  n_kv_heads: 8
+  head_dim: 128
+  ffn_hidden: 18432
+  # --- attention ---
+  attn_impl: mla            # DeepSeek-style latent attention, tiny KV cache
+  kv_lora_rank: 512
+  q_lora_rank: 1536
+  qk_nope_head_dim: 128
+  qk_rope_head_dim: 64
+  v_head_dim: 128
+  qk_norm: true
+  # --- long context (extend 8k -> 128k at the end of training) ---
+  rope_base: 10000.0
+  rope_scaling:
+    type: yarn
+    factor: 16.0
+    original_max_seq_len: 8192
+  # --- MoE ---
+  use_moe: true
+  moe_every: 1
+  n_routed_experts: 48
+  n_shared_experts: 1
+  moe_top_k: 6
+  router_score: sigmoid
+  router_bias: true          # auxiliary-loss-free balancing
+  aux_loss_coef: 1.0e-4
+  z_loss_coef: 1.0e-5
+
+train:
+  optimizer: muon_adamw
+  lr: 1.5e-4
+  muon_lr: 0.02
+  muon_momentum: 0.95
+  muon_ns_steps: 5
+  weight_decay: 0.1
+  betas: [0.9, 0.95]
+  warmup_steps: 2000
+  max_steps: 500000
+  lr_schedule: wsd
+  wsd_decay_frac: 0.1
+  micro_batch_size: 1
+  grad_accum_steps: 512
+  seq_len: 8192
+  dtype: bf16
+  grad_clip: 1.0
+  # --- parallelism (must multiply to the total GPU count) ---
+  tensor_parallel: 8
+  pipeline_parallel: 16
+  expert_parallel: 8
+  context_parallel: 1
+  data_parallel: 2
+  zero_stage: 1
+  seed: 0
+  log_every: 10
+  save_every: 1000
+  out_dir: runs/moe-1t

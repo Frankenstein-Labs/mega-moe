@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mega"
+version = "0.1.0"
+description = "Reference implementation of a Mixture-of-Experts multimodal LLM (GQA/MLA, SwiGLU, Muon+AdamW) with a reproducible CPU-scale test path."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "torch>=2.2",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+tokenizer = ["sentencepiece>=0.2.0", "protobuf>=4.25"]
+data = ["datasets>=2.18", "webdataset>=0.2.86", "pyarrow>=15.0"]
+eval = ["lm-eval>=0.4"]
+dev = ["pytest>=8.0", "ruff>=0.5"]
+
+[project.scripts]
+mega-info = "mega.utils.calc:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mega = ["configs/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
