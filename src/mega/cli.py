@@ -77,6 +77,10 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--dataset-repo", default=None)
     sp.add_argument("--token", default=None, help="defaults to $HF_TOKEN")
     sp.add_argument("--private", action="store_true")
+    sp.add_argument("--eval-lines", type=int, default=0,
+                    help="if >0, run the eval harness and record metrics in the model card")
+    sp.add_argument("--refresh-card", action="store_true",
+                    help="regenerate README.md even if the directory already has one")
 
     return p
 
@@ -175,9 +179,28 @@ def _run_push(argv: list[str]) -> int:
 
     # attach a model card if the directory does not already have one
     readme = model_dir / "README.md"
-    if not readme.exists():
+    if not readme.exists() or args.refresh_card:
+        metrics = None
+        if args.eval_lines:
+            from .eval.harness import evaluate
+
+            res = evaluate(model_dir, n_lines=args.eval_lines)
+            metrics = {
+                "perplexity": res["perplexity"],
+                "next_token_accuracy": res["next_token_accuracy"],
+                "arithmetic_accuracy": res["arithmetic_accuracy"],
+            }
         readme.write_text(
-            model_card(cfg, total_params=total, active_params=active), encoding="utf-8"
+            model_card(
+                cfg,
+                total_params=total,
+                active_params=active,
+                tokenizer_name="SentencePiece unigram, 800 tokens",
+                dataset_name=args.dataset_repo or "Frankenstein-Labs/mega-corpus",
+                metrics=metrics,
+                code_url="https://github.com/Frankenstein-Labs/mega-moe",
+            ),
+            encoding="utf-8",
         )
 
     create_repo(args.repo, token=token, private=args.private)
