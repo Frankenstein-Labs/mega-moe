@@ -82,3 +82,24 @@ src/mega/train/        loop.py (runs anywhere), distributed.py (topology checks)
 src/mega/utils/        checkpoint, calc (mega-info), feasibility
 docs/                  FEASIBILITY, ARCHITECTURE, ROADMAP, INFRASTRUCTURE
 ```
+
+## Sequence encoding invariant (do not break)
+
+Every document the model trains on **starts with BOS** and is separated by EOS
+(`TextCorpus(path, tok, seq_len, bos_id=tok.bos_token_id)` + `pack_sequences`).
+Generation (`cli generate`) and the eval harness (`evaluate`) must use the *same*
+encoding: `[bos, *tok.encode(text)]`. A mismatch here silently destroys perplexity
+(trained-no-BOS + eval-with-BOS made a 2.9-perplexity model score 96).
+
+Verified numbers for the published `Frankenstein-Labs/mega-small` run: perplexity
+3.07, next-token accuracy 0.667, arithmetic accuracy 0.35 (training loss 6.72 -> 1.02
+over 1500 steps).
+
+## Published artifacts
+
+* Model:   https://huggingface.co/Frankenstein-Labs/mega-small
+* Dataset: https://huggingface.co/datasets/Frankenstein-Labs/mega-corpus
+* Space:   https://huggingface.co/spaces/Frankenstein-Labs/mega-demo  (static; Gradio needs PRO)
+* Code:    https://github.com/Frankenstein-Labs/mega-moe
+
+Publish with `mega push --repo Frankenstein-Labs/mega-small --model runs/mega-small/hf --refresh-card --eval-lines 400` (needs `$HF_TOKEN`).
