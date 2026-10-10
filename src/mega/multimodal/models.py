@@ -17,7 +17,6 @@ so there is a single set of transformer weights and a single loss.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -192,8 +191,9 @@ class MultimodalModel(nn.Module):
     sequences.
     """
 
-    def __init__(self, text_cfg: ModelConfig, fusion_cfg: FusionConfig = FusionConfig()):
+    def __init__(self, text_cfg: ModelConfig, fusion_cfg: FusionConfig | None = None):
         super().__init__()
+        fusion_cfg = fusion_cfg or FusionConfig()
         self.text = MegaModel(text_cfg)
         self.fusion_cfg = fusion_cfg
         d = text_cfg.d_model
@@ -222,9 +222,9 @@ class MultimodalModel(nn.Module):
     def forward(
         self,
         input_ids: torch.Tensor,
-        labels: Optional[torch.Tensor] = None,
-        pixel_values: Optional[torch.Tensor] = None,
-        mel: Optional[torch.Tensor] = None,
+        labels: torch.Tensor | None = None,
+        pixel_values: torch.Tensor | None = None,
+        mel: torch.Tensor | None = None,
     ):
         """Interleave modality soft tokens before the text embeddings.
 

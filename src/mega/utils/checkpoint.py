@@ -7,11 +7,10 @@ self-describing, which removes a whole class of "which YAML was this?" bugs.
 
 from __future__ import annotations
 
-import json
 import os
 import random
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import torch
 
@@ -37,7 +36,7 @@ def restore_rng(state: dict[str, Any]) -> None:
 def save_checkpoint(
     path: str | os.PathLike,
     model: torch.nn.Module,
-    optimizer: Optional[torch.optim.Optimizer],
+    optimizer: torch.optim.Optimizer | None,
     step: int,
     model_cfg: ModelConfig,
     train_cfg: TrainConfig,
@@ -61,7 +60,7 @@ def save_checkpoint(
 def load_checkpoint(
     path: str | os.PathLike,
     model: torch.nn.Module,
-    optimizer: Optional[torch.optim.Optimizer] = None,
+    optimizer: torch.optim.Optimizer | None = None,
     map_location: str | torch.device = "cpu",
 ) -> tuple[int, dict[str, Any]]:
     """Load weights (and optimiser state) in place; return ``(step, configs)``."""

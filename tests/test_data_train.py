@@ -1,4 +1,3 @@
-import pytest
 import torch
 
 from mega.config import ModelConfig, TrainConfig
@@ -6,7 +5,6 @@ from mega.data.pack import SyntheticCorpus, pack_sequences
 from mega.parallel.plan import (
     kv_cache_bytes,
     plan_parallelism,
-    total_params,
     training_flops,
     training_memory,
 )

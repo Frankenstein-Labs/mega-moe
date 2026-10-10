@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 
 @dataclass
@@ -38,7 +38,7 @@ class ModelConfig:
     attn_impl: Literal["gqa", "mla"] = "gqa"
     # Multi-head Latent Attention (DeepSeek-V2/V3 style) dimensions.
     kv_lora_rank: int = 512
-    q_lora_rank: Optional[int] = 1536
+    q_lora_rank: int | None = 1536
     qk_nope_head_dim: int = 128
     qk_rope_head_dim: int = 64
     v_head_dim: int = 128
@@ -47,7 +47,7 @@ class ModelConfig:
     rope_base: float = 10_000.0
     # e.g. {"type": "yarn", "factor": 8.0, "original_max_seq_len": 4096}
     #      {"type": "linear", "factor": 8.0}
-    rope_scaling: Optional[dict[str, Any]] = None
+    rope_scaling: dict[str, Any] | None = None
 
     # ------------------------------------------------------------------- MoE
     use_moe: bool = True
@@ -56,7 +56,7 @@ class ModelConfig:
     n_routed_experts: int = 64
     n_shared_experts: int = 2
     moe_top_k: int = 6
-    expert_hidden: Optional[int] = None
+    expert_hidden: int | None = None
     router_score: Literal["softmax", "sigmoid"] = "softmax"
     router_jitter: float = 0.0
     # Auxiliary-loss-free balancing (DeepSeek-V3): learned per-expert bias.
@@ -138,7 +138,7 @@ class TrainConfig:
     # ---- precision ----
     dtype: Literal["fp32", "bf16", "fp16"] = "bf16"
     # FP4/FP8 are only meaningful on Hopper/Blackwell; kept as a target knob.
-    quantized_linear: Optional[Literal["fp8", "fp4"]] = None
+    quantized_linear: Literal["fp8", "fp4"] | None = None
 
     # ---- parallelism ----
     tensor_parallel: int = 1

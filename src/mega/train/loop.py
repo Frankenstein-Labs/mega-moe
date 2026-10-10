@@ -21,7 +21,6 @@ import argparse
 import contextlib
 import time
 from pathlib import Path
-from typing import Optional
 
 import torch
 
@@ -67,7 +66,7 @@ class Trainer:
         self.step = 0
 
     def _set_lr(self, scale: float) -> None:
-        for group, base in zip(self.optimizer.param_groups, self.base_lrs):
+        for group, base in zip(self.optimizer.param_groups, self.base_lrs, strict=True):
             group["lr"] = base * scale
 
     def train(self, corpus: SyntheticCorpus) -> list[dict]:

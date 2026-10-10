@@ -4,8 +4,8 @@ from .models import (
     FusionConfig,
     MultimodalModel,
     PerceiverResampler,
-    ViTConfig,
     VisionEncoder,
+    ViTConfig,
 )
 
 __all__ = [

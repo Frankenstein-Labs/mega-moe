@@ -19,7 +19,6 @@ Attention kernels are picked up automatically on Hopper/Blackwell.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -114,7 +113,7 @@ class GQAttention(_AttentionBase):
         self.q_norm = RMSNorm(self.head_dim, cfg.norm_eps) if cfg.qk_norm else None
         self.k_norm = RMSNorm(self.head_dim, cfg.norm_eps) if cfg.qk_norm else None
 
-    def forward(self, x, cos, sin, cache: Optional[KVCache] = None, causal: bool = True):
+    def forward(self, x, cos, sin, cache: KVCache | None = None, causal: bool = True):
         b, t, _ = x.shape
         q = self.q_proj(x).view(b, t, self.n_heads, self.head_dim)
         k = self.k_proj(x).view(b, t, self.n_kv_heads, self.head_dim)
@@ -161,7 +160,7 @@ class MLAttention(_AttentionBase):
         )
         self.o_proj = nn.Linear(cfg.n_heads * self.v_head_dim, cfg.d_model, bias=False)
 
-    def forward(self, x, cos, sin, cache: Optional[KVCache] = None, causal: bool = True):
+    def forward(self, x, cos, sin, cache: KVCache | None = None, causal: bool = True):
         b, t, _ = x.shape
         if self.q_lora_rank:
             q = self.q_b_proj(self.q_a_norm(self.q_a_proj(x)))

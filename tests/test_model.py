@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from mega.config import ModelConfig, TrainConfig
+from mega.config import ModelConfig
 from mega.model.transformer import MegaModel
 from mega.parallel.plan import active_params, total_params
 

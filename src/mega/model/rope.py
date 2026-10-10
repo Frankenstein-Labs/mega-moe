@@ -13,7 +13,6 @@ by the extension factor, and the two regimes are blended with a linear ramp.
 from __future__ import annotations
 
 import math
-from typing import Optional
 
 import torch
 
@@ -40,8 +39,8 @@ def build_rope_cache(
     head_dim: int,
     max_seq_len: int,
     base: float = 10_000.0,
-    scaling: Optional[dict] = None,
-    device: Optional[torch.device] = None,
+    scaling: dict | None = None,
+    device: torch.device | None = None,
     dtype: torch.dtype = torch.float32,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Return ``(cos, sin)`` each of shape ``[max_seq_len, head_dim]``."""

@@ -14,6 +14,10 @@ dependencies = [
     "pyyaml>=6.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Frankenstein-Labs/mega-moe"
+Repository = "https://github.com/Frankenstein-Labs/mega-moe"
+
 [project.optional-dependencies]
 tokenizer = ["sentencepiece>=0.2.0", "protobuf>=4.25"]
 data = ["datasets>=2.18", "webdataset>=0.2.86", "pyarrow>=15.0"]

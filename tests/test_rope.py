@@ -1,6 +1,5 @@
 import math
 
-import pytest
 import torch
 
 from mega.model.rope import apply_rope, build_rope_cache, yarn_mscale

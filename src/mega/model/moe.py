@@ -25,7 +25,6 @@ should replace it (see ``parallel/plan.py``).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -38,8 +37,8 @@ __all__ = ["MoEStats", "MoELayer"]
 class MoEStats:
     aux_loss: torch.Tensor = field(default_factory=lambda: torch.tensor(0.0))
     z_loss: torch.Tensor = field(default_factory=lambda: torch.tensor(0.0))
-    tokens_per_expert: Optional[torch.Tensor] = None
-    router_entropy: Optional[torch.Tensor] = None
+    tokens_per_expert: torch.Tensor | None = None
+    router_entropy: torch.Tensor | None = None
 
     def detached(self) -> MoEStats:
         return MoEStats(

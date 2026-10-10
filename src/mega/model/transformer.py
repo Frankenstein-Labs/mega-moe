@@ -13,7 +13,6 @@ config change rather than a conversion step.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -43,7 +42,7 @@ class Block(nn.Module):
         else:
             self.ffn = SwiGLU(cfg.d_model, cfg.ffn_hidden)
 
-    def forward(self, x, cos, sin, cache: Optional[KVCache] = None, causal: bool = True):
+    def forward(self, x, cos, sin, cache: KVCache | None = None, causal: bool = True):
         h, cache = self.attn(self.attn_norm(x), cos, sin, cache=cache, causal=causal)
         x = x + h
         stats = None
@@ -58,11 +57,11 @@ class Block(nn.Module):
 @dataclass
 class ModelOutput:
     logits: torch.Tensor
-    loss: Optional[torch.Tensor] = None
-    aux_loss: Optional[torch.Tensor] = None
-    z_loss: Optional[torch.Tensor] = None
+    loss: torch.Tensor | None = None
+    aux_loss: torch.Tensor | None = None
+    z_loss: torch.Tensor | None = None
     stats: list[MoEStats] = field(default_factory=list)
-    caches: Optional[list[KVCache]] = None
+    caches: list[KVCache] | None = None
 
 
 class MegaModel(nn.Module):
@@ -102,8 +101,8 @@ class MegaModel(nn.Module):
     def forward(
         self,
         input_ids: torch.Tensor,
-        labels: Optional[torch.Tensor] = None,
-        caches: Optional[list[KVCache]] = None,
+        labels: torch.Tensor | None = None,
+        caches: list[KVCache] | None = None,
         past_len: int = 0,
         causal: bool = True,
     ) -> ModelOutput:
@@ -158,13 +157,12 @@ class MegaModel(nn.Module):
         input_ids: torch.Tensor,
         max_new_tokens: int = 32,
         temperature: float = 1.0,
-        top_k: Optional[int] = None,
-        top_p: Optional[float] = None,
-        eos_token_id: Optional[int] = None,
+        top_k: int | None = None,
+        top_p: float | None = None,
+        eos_token_id: int | None = None,
     ) -> torch.Tensor:
         self.eval()
-        device = input_ids.device
-        caches: Optional[list[KVCache]] = self.empty_caches()
+        caches: list[KVCache] | None = self.empty_caches()
         past = 0
         generated = input_ids
         cur = input_ids

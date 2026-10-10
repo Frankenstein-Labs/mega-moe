@@ -19,7 +19,6 @@ reference implementation so that a single ``muon_lr`` works across shapes.
 from __future__ import annotations
 
 import math
-from typing import Iterable, Optional
 
 import torch
 
@@ -82,7 +81,7 @@ class MuonAdamW(torch.optim.Optimizer):
         super().__init__(groups, defaults={})
 
     @torch.no_grad()
-    def step(self, closure: Optional[callable] = None):  # type: ignore[valid-type]
+    def step(self, closure: callable | None = None):  # type: ignore[valid-type]
         loss = None
         if closure is not None:
             with torch.enable_grad():
@@ -143,9 +142,9 @@ class MuonAdamW(torch.optim.Optimizer):
 
 def build_optimizer(model: torch.nn.Module, cfg) -> torch.optim.Optimizer:
     if cfg.optimizer == "adamw":
-        muon, adamw = [], list(model.parameters())
         return torch.optim.AdamW(
-            adamw, lr=cfg.lr, betas=cfg.betas, eps=cfg.eps, weight_decay=cfg.weight_decay
+            list(model.parameters()),
+            lr=cfg.lr, betas=cfg.betas, eps=cfg.eps, weight_decay=cfg.weight_decay,
         )
     return MuonAdamW(
         model,

@@ -7,8 +7,8 @@ from mega.multimodal.models import (
     FusionConfig,
     MultimodalModel,
     PerceiverResampler,
-    ViTConfig,
     VisionEncoder,
+    ViTConfig,
 )
 
 

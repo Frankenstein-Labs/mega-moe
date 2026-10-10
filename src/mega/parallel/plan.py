@@ -234,6 +234,7 @@ def plan_parallelism(
     p = total_params(cfg)
     max_pp = max_pp or cfg.n_layers
     best: ParallelPlan | None = None
+    best_score = math.inf
 
     for tp, pp, cp in itertools.product(
         [2**i for i in range(0, 8)],
@@ -269,7 +270,7 @@ def plan_parallelism(
             feasible=feasible,
             notes="" if feasible else "weights alone exceed the memory budget",
         )
-        if best is None or score < best_score:  # type: ignore[name-defined]
+        if best is None or score < best_score:
             best, best_score = plan, score
     if best is None:
         raise ValueError(f"no valid parallel plan for n_gpus={n_gpus}")

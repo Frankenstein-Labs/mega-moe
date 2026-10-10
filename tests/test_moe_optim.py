@@ -64,7 +64,6 @@ def test_shared_experts_add_parameters():
 def test_split_params_separates_2d_matrices():
     model = MegaModel(cfg())
     muon, adamw = split_params(model)
-    names = {n for n, _ in model.named_parameters()}
     assert muon and adamw
     assert all(p.ndim == 2 for p in muon)
     # embedding and router must never be in the Muon group
